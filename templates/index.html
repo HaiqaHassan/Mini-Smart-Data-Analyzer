@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f3f0e7">
+  <meta name="description" content="A professional NumPy and Groq powered mini data analyzer.">
+  <title>Mini Smart Data Analyzer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --forest: #1e3024;
+      --forest-2: #2d4433;
+      --sage: #87977a;
+      --sage-light: #e4e9dc;
+      --olive: #a4ad8c;
+      --cream: #f3f0e7;
+      --paper: #fbfaf6;
+      --paper-2: #f7f4ec;
+      --ink: #20251f;
+      --muted: #72776d;
+      --line: #e7e3d8;
+      --gold: #c6a96b;
+      --danger: #a34e43;
+      --shadow: 0 12px 34px rgba(44, 54, 39, .075);
+      --radius: 19px;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--cream);
+      font-family: "DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    button, textarea { font: inherit; }
+    a { color: inherit; text-decoration: none; }
+    .app-shell { min-height: 100vh; display: grid; grid-template-columns: 246px minmax(0, 1fr); }
+
+    /* Left navigation */
+    .sidebar {
+      min-height: 100vh;
+      padding: 30px 19px 22px;
+      color: #f4f1e8;
+      background: linear-gradient(165deg, #26392b 0%, #1b2b20 72%, #18261d 100%);
+      display: flex;
+      flex-direction: column;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow: hidden;
+    }
+    .brand { display: flex; align-items: center; gap: 12px; padding: 2px 8px 34px; }
+    .brand-mark {
+      width: 43px; height: 43px; border: 1px solid rgba(229, 229, 205, .3);
+      border-radius: 14px; display: grid; place-items: center; color: #dce4cf;
+      background: rgba(232, 237, 219, .08);
+    }
+    .brand-mark svg { width: 25px; height: 25px; }
+    .brand-name { font-family: "Playfair Display", Georgia, serif; font-size: 21px; letter-spacing: -.5px; }
+    .brand-name span { color: #c6d0b9; }
+    .brand-subtitle { display: block; margin-top: 2px; color: #aeb9a7; font-size: 10px; letter-spacing: 1.7px; text-transform: uppercase; }
+    .nav-label { padding: 0 12px 10px; color: #8f9f8e; font-size: 9px; font-weight: 700; letter-spacing: 1.8px; text-transform: uppercase; }
+    .nav-list { display: grid; gap: 7px; }
+    .nav-link { display: flex; align-items: center; gap: 13px; min-height: 46px; padding: 0 13px; color: #c5cec1; font-size: 13px; font-weight: 500; border-radius: 12px; transition: .2s ease; }
+    .nav-link svg { width: 18px; height: 18px; opacity: .85; }
+    .nav-link:hover { background: rgba(241, 242, 227, .08); color: #fff; }
+    .nav-link.active { color: #223226; background: #e8eadb; box-shadow: 0 5px 15px rgba(0,0,0,.12); }
+    .nav-link.active svg { color: #435b42; opacity: 1; }
+    .sidebar-spacer { flex: 1; min-height: 35px; }
+    .sidebar-note { margin: 12px 4px 20px; padding: 17px 15px; border: 1px solid rgba(220, 229, 207, .16); border-radius: 14px; background: rgba(255,255,255,.045); }
+    .sidebar-note .note-kicker { color: #a9b79d; font-size: 9px; font-weight: 700; letter-spacing: 1.4px; text-transform: uppercase; }
+    .sidebar-note p { margin: 9px 0 0; color: #e9eadf; font-family: "Playfair Display", Georgia, serif; font-size: 16px; line-height: 1.45; }
+    .sidebar-footer { padding: 14px 8px 0; color: #92a08e; font-size: 10px; line-height: 1.6; border-top: 1px solid rgba(255,255,255,.12); }
+
+    /* Main canvas and heading */
+    .main-shell { min-width: 0; padding: 28px clamp(22px, 3.5vw, 52px) 24px; }
+    .topbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 23px; }
+    .breadcrumb { color: var(--muted); font-size: 11px; letter-spacing: .2px; }
+    .breadcrumb strong { color: var(--forest); font-weight: 700; }
+    .topbar-right { display: flex; align-items: center; gap: 10px; }
+    .tech-pill, .assignment-pill { display: inline-flex; align-items: center; gap: 8px; min-height: 32px; padding: 0 12px; border: 1px solid #e2dfd3; border-radius: 99px; background: rgba(251,250,246,.72); color: #586451; font-size: 10px; font-weight: 600; }
+    .status-dot { width: 7px; height: 7px; border-radius: 50%; background: #879b70; box-shadow: 0 0 0 3px #e8ecdf; }
+
+    /* Hero */
+    .hero-banner {
+      position: relative; min-height: 185px; overflow: hidden; display: flex; align-items: center;
+      justify-content: space-between; gap: 25px; padding: 31px 38px; border-radius: 22px;
+      color: #f6f3e9; background: linear-gradient(108deg, #1d3023 0%, #2d4835 62%, #344d39 100%);
+      box-shadow: 0 14px 28px rgba(34, 52, 38, .13);
+    }
+    .hero-banner:before { content: ""; position: absolute; width: 430px; height: 430px; right: 8%; top: -310px; border: 1px solid rgba(227,232,211,.14); border-radius: 50%; box-shadow: 0 0 0 42px rgba(227,232,211,.025), 0 0 0 85px rgba(227,232,211,.025); }
+    .hero-copy { position: relative; z-index: 2; max-width: 610px; }
+    .hero-kicker { display: flex; align-items: center; gap: 9px; margin: 0 0 12px; color: #c5d0b7; font-size: 9px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; }
+    .hero-kicker:before { content: ""; width: 23px; height: 1px; background: var(--gold); }
+    h1 { margin: 0; font-family: "Playfair Display", Georgia, serif; font-size: clamp(30px, 3.2vw, 43px); font-weight: 600; line-height: 1.12; letter-spacing: -.8px; }
+    .hero-copy > p:last-child { margin: 11px 0 0; color: #c9d2c4; font-size: 12px; line-height: 1.65; }
+    .hero-copy > p:last-child strong { color: #f6f3e9; font-weight: 600; }
+    .hero-visual { position: relative; z-index: 1; width: min(34%, 340px); min-width: 230px; height: 124px; display: flex; align-items: center; justify-content: center; }
+    .hero-chart { width: 100%; max-width: 330px; height: 120px; overflow: visible; }
+    .hero-chart .grid-line { stroke: rgba(235,238,220,.12); stroke-width: 1; }
+    .hero-chart .trend { fill: none; stroke: #c7d1ae; stroke-width: 2.6; stroke-linecap: round; }
+    .hero-chart .area { fill: url(#heroFill); }
+    .hero-chart circle { fill: #e4d19d; stroke: #344b37; stroke-width: 3; }
+    .hero-floating { position: absolute; right: -4px; bottom: -4px; padding: 8px 11px; border: 1px solid rgba(236,239,221,.22); border-radius: 9px; background: rgba(13,27,18,.34); color: #e8e8d9; font-size: 9px; letter-spacing: .7px; }
+
+    /* Section layout and input */
+    .section-head { display: flex; align-items: end; justify-content: space-between; gap: 15px; margin: 31px 0 14px; }
+    .section-kicker { margin: 0 0 5px; color: #849078; font-size: 9px; font-weight: 700; letter-spacing: 1.65px; text-transform: uppercase; }
+    h2 { margin: 0; color: var(--forest); font-family: "Playfair Display", Georgia, serif; font-size: 23px; font-weight: 600; letter-spacing: -.25px; }
+    .section-step { color: #81877a; font-size: 9px; font-weight: 700; letter-spacing: 1.3px; white-space: nowrap; }
+    .section-step span { padding: 0 5px; color: #bdad7e; }
+    .input-layout { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(220px, .85fr); gap: 15px; }
+    .panel { border: 1px solid #e7e3d8; border-radius: var(--radius); background: var(--paper); box-shadow: var(--shadow); }
+    .input-panel { padding: 21px 23px 18px; }
+    .panel-title-row { display: flex; align-items: center; gap: 12px; margin-bottom: 15px; }
+    .icon-box { width: 38px; height: 38px; flex: 0 0 38px; display: grid; place-items: center; border-radius: 12px; color: #425b43; background: #e7ebdf; }
+    .icon-box svg { width: 18px; height: 18px; }
+    h3 { margin: 0; color: #2a352b; font-size: 14px; font-weight: 700; letter-spacing: -.2px; }
+    .panel-subtitle { margin: 4px 0 0; color: var(--muted); font-size: 10px; line-height: 1.5; }
+    .field-label { display: flex; justify-content: space-between; gap: 10px; margin: 0 0 8px; color: #78816f; font-size: 9px; font-weight: 700; letter-spacing: 1.15px; text-transform: uppercase; }
+    .field-label span { color: #a2a493; font-weight: 500; letter-spacing: .1px; text-transform: none; }
+    textarea { width: 100%; min-height: 82px; display: block; resize: vertical; padding: 13px 14px; border: 1px solid #dcdccc; border-radius: 11px; outline: none; color: #263329; background: #fdfcf8; font-size: 12px; line-height: 1.6; transition: border-color .2s, box-shadow .2s; }
+    textarea::placeholder { color: #aaa99c; }
+    textarea:focus { border-color: #8b9c7d; box-shadow: 0 0 0 3px rgba(139,156,125,.14); }
+    .form-bottom { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 12px; }
+    .sample-button { border: 0; padding: 9px 0; color: #66775d; background: transparent; cursor: pointer; font-size: 10px; font-weight: 600; }
+    .sample-button:hover { color: var(--forest); text-decoration: underline; }
+    .analyze-button { display: inline-flex; align-items: center; justify-content: center; gap: 19px; min-height: 41px; padding: 0 17px; border: 0; border-radius: 10px; color: #fff; background: linear-gradient(110deg, #2a4230, #405b40); box-shadow: 0 6px 14px rgba(34,58,39,.16); cursor: pointer; font-size: 11px; font-weight: 700; transition: transform .2s, box-shadow .2s; }
+    .analyze-button:hover { transform: translateY(-1px); box-shadow: 0 9px 18px rgba(34,58,39,.2); }
+    .analyze-button span { color: #d6dfc8; font-size: 16px; }
+    .form-footnote { display: flex; align-items: center; gap: 7px; margin: 11px 0 0; color: #939789; font-size: 9px; }
+    .form-footnote svg { width: 13px; height: 13px; color: #7c8e70; }
+    .error-message { display: flex; align-items: center; gap: 8px; margin-top: 9px; padding: 9px 11px; border: 1px solid #ecd5d0; border-radius: 9px; color: var(--danger); background: #fbf1ee; font-size: 10px; }
+    .error-mark { width: 17px; height: 17px; display: grid; place-items: center; border-radius: 50%; color: white; background: var(--danger); font-size: 11px; font-weight: 700; }
+    .guide-panel { padding: 21px 20px; background: linear-gradient(145deg, #e7ebdf, #f1f1e8); }
+    .guide-panel h3 { color: #304232; }
+    .guide-list { display: grid; gap: 11px; margin: 16px 0 0; padding: 0; list-style: none; }
+    .guide-list li { display: flex; align-items: start; gap: 9px; color: #626f5d; font-size: 10px; line-height: 1.5; }
+    .guide-check { width: 17px; height: 17px; flex: 0 0 17px; display: grid; place-items: center; border-radius: 50%; color: #42583e; background: #d1dbc8; font-size: 10px; font-weight: 700; }
+    .guide-foot { margin: 16px 0 0; padding-top: 12px; border-top: 1px solid #d7ddce; color: #78836f; font-size: 9px; line-height: 1.5; }
+
+    /* Results */
+    .results-section { margin-top: 34px; scroll-margin-top: 20px; }
+    .results-section .section-head { margin-top: 0; }
+    .complete-pill { display: inline-flex; align-items: center; gap: 7px; color: #63765a; font-size: 9px; font-weight: 700; letter-spacing: 1px; }
+    .complete-pill:before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: #80986e; box-shadow: 0 0 0 3px #e2e9dc; }
+    .stats-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
+    .stat-card { min-width: 0; padding: 16px 15px 14px; border: 1px solid #e6e2d8; border-radius: 15px; background: var(--paper); box-shadow: 0 6px 18px rgba(44,54,39,.045); }
+    .stat-card.featured { border-color: #d4ddca; background: linear-gradient(145deg, #f8f9f2, #edf1e7); }
+    .stat-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; color: #697264; font-size: 10px; font-weight: 600; }
+    .stat-icon { width: 27px; height: 27px; display: grid; place-items: center; border-radius: 9px; color: #445d43; background: #e8ecdf; font-size: 14px; }
+    .stat-value { margin-top: 8px; color: #1d2d21; font-family: "Playfair Display", Georgia, serif; font-size: clamp(21px, 2.1vw, 27px); font-weight: 600; letter-spacing: -.7px; overflow-wrap: anywhere; }
+    .stat-caption { margin-top: 3px; color: #9a9e91; font-size: 9px; }
+    .analysis-grid { display: grid; grid-template-columns: minmax(0, 1.24fr) minmax(215px, .86fr) minmax(260px, 1fr); gap: 13px; margin-top: 14px; align-items: stretch; }
+    .chart-card, .values-card { padding: 18px; }
+    .card-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .card-head-left { display: flex; align-items: center; gap: 9px; }
+    .card-head-icon { width: 29px; height: 29px; display: grid; place-items: center; border-radius: 9px; color: #425b43; background: #e7ebdf; font-size: 14px; }
+    .card-head h3 { font-size: 12px; }
+    .tiny-label { color: #8e9587; font-size: 8px; font-weight: 700; letter-spacing: 1px; }
+    .chart-caption { margin: 7px 0 0 38px; color: #8a8f83; font-size: 9px; }
+    .bar-chart { height: 150px; display: flex; align-items: stretch; gap: 8px; margin: 20px 3px 0; padding: 0 8px; border-bottom: 1px solid #c9cdbc; background: repeating-linear-gradient(to bottom, transparent 0, transparent 36px, rgba(135,151,122,.16) 37px, transparent 38px); }
+    .bar-column { height: 100%; flex: 1 1 0; min-width: 5px; display: flex; flex-direction: column; justify-content: end; align-items: center; gap: 7px; }
+    .bar { width: min(100%, 23px); min-height: 5px; border-radius: 5px 5px 2px 2px; background: linear-gradient(180deg, #8d9d7e 0%, #405b43 100%); box-shadow: 0 3px 6px rgba(50,77,53,.12); transition: height .25s ease; }
+    .bar-column:nth-child(3n) .bar { background: linear-gradient(180deg, #a5ad8d, #667951); }
+    .bar-column span { color: #a0a394; font-size: 8px; }
+    .chart-legend { display: flex; justify-content: space-between; gap: 10px; margin-top: 10px; color: #979b90; font-size: 8px; }
+    .chart-legend strong { color: #65775d; font-weight: 600; }
+    .values-stack { display: grid; grid-template-rows: 1fr 1fr; gap: 12px; }
+    .values-card { min-height: 0; }
+    .values-card .card-head { margin-bottom: 9px; }
+    .value-summary { margin: 0 0 9px; color: #93988b; font-size: 9px; line-height: 1.45; }
+    .value-list { max-height: 105px; display: flex; flex-wrap: wrap; align-content: start; gap: 5px; overflow-y: auto; padding-right: 3px; }
+    .value-chip { display: inline-flex; align-items: center; min-height: 23px; padding: 0 8px; border: 1px solid #e3e6dc; border-radius: 7px; color: #50634b; background: #f0f3eb; font-size: 9px; font-weight: 600; font-variant-numeric: tabular-nums; }
+    .above-card .value-chip { border-color: #d8dfcd; color: #435d40; background: #e8eee1; }
+    .empty-state { margin: 0; color: #8c9186; font-size: 10px; font-style: italic; }
+    .ai-card { position: relative; overflow: hidden; padding: 20px; color: #f5f4e9; border: 1px solid #344b37; border-radius: var(--radius); background: linear-gradient(145deg, #253a2a 0%, #1d3023 100%); box-shadow: 0 10px 23px rgba(34,52,38,.13); }
+    .ai-card:after { content: ""; position: absolute; right: -69px; bottom: -112px; width: 230px; height: 230px; border: 1px solid rgba(223,230,209,.12); border-radius: 50%; box-shadow: 0 0 0 30px rgba(223,230,209,.025), 0 0 0 60px rgba(223,230,209,.025); }
+    .ai-head { position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 9px; }
+    .ai-title { display: flex; align-items: center; gap: 9px; }
+    .ai-spark { width: 27px; height: 27px; display: grid; place-items: center; border-radius: 9px; color: #e2d4a6; background: rgba(224,218,180,.12); font-size: 15px; }
+    .ai-head h3 { color: #f4f2e8; font-family: "Playfair Display", Georgia, serif; font-size: 16px; font-weight: 600; }
+    .ai-provider { padding: 6px 8px; border: 1px solid rgba(221,229,207,.2); border-radius: 99px; color: #c5d0ba; font-size: 8px; white-space: nowrap; }
+    .ai-provider:before { content: ""; display: inline-block; width: 5px; height: 5px; margin: 0 5px 1px 0; border-radius: 50%; background: #c7b47d; }
+    .ai-copy { position: relative; z-index: 1; margin: 17px 0 0; color: #e0e5d8; font-size: 11px; line-height: 1.8; }
+    .ai-footer { position: relative; z-index: 1; display: flex; align-items: center; gap: 7px; margin-top: 18px; padding-top: 12px; border-top: 1px solid rgba(235,238,222,.15); color: #aab9a3; font-size: 8px; letter-spacing: .5px; }
+    .ai-footer svg { width: 13px; height: 13px; }
+    .summary-strip { display: flex; align-items: center; justify-content: space-between; gap: 15px; margin-top: 14px; padding: 14px 18px; border: 1px solid #e1e5d8; border-radius: 14px; background: linear-gradient(100deg, #edf0e6, #f7f6ef); }
+    .summary-copy { display: flex; align-items: center; gap: 11px; color: #66735e; font-size: 10px; line-height: 1.55; }
+    .summary-copy strong { display: block; margin-bottom: 2px; color: #344a35; font-size: 11px; }
+    .summary-icon { width: 32px; height: 32px; flex: 0 0 32px; display: grid; place-items: center; border-radius: 10px; color: #53694a; background: #dce5d4; font-size: 16px; }
+    .print-button { flex: 0 0 auto; min-height: 34px; padding: 0 13px; border: 1px solid #d8dfd1; border-radius: 9px; color: #496147; background: rgba(255,255,255,.65); cursor: pointer; font-size: 9px; font-weight: 700; }
+    .print-button:hover { background: #fff; }
+    .empty-state-panel { display: flex; align-items: center; gap: 15px; margin-top: 18px; padding: 16px 18px; border: 1px dashed #d7ddcf; border-radius: 14px; color: #75816b; background: rgba(250,249,244,.6); }
+    .empty-state-panel .empty-icon { width: 35px; height: 35px; flex: 0 0 35px; display: grid; place-items: center; border-radius: 11px; color: #4b6347; background: #e4eadc; font-size: 16px; }
+    .empty-state-panel strong { display: block; color: #425640; font-size: 11px; }
+    .empty-state-panel p { margin: 3px 0 0; font-size: 9px; line-height: 1.5; }
+    .footer { display: flex; align-items: center; justify-content: space-between; gap: 15px; margin-top: 30px; padding: 15px 2px 0; border-top: 1px solid #dfddd2; color: #93988b; font-size: 8px; letter-spacing: .6px; }
+    .footer-brand { color: #53664d; font-family: "Playfair Display", Georgia, serif; font-size: 13px; font-weight: 600; letter-spacing: 0; }
+    .footer-brand span { color: #aa9b73; }
+    .footer p { margin: 0; text-align: center; }
+    .footer p strong { color: #6d7d61; font-weight: 700; }
+
+    @media (max-width: 1250px) {
+      .app-shell { grid-template-columns: 218px minmax(0, 1fr); }
+      .sidebar { padding-left: 15px; padding-right: 15px; }
+      .main-shell { padding-left: 25px; padding-right: 25px; }
+      .analysis-grid { grid-template-columns: minmax(0, 1.15fr) minmax(200px, .85fr); }
+      .ai-card { grid-column: 1 / -1; }
+    }
+    @media (max-width: 850px) {
+      .app-shell { grid-template-columns: 1fr; }
+      .sidebar { position: relative; height: auto; min-height: 0; padding: 14px 20px; }
+      .brand { padding: 0 0 13px; }
+      .brand-mark { width: 36px; height: 36px; }
+      .brand-name { font-size: 18px; }
+      .nav-label, .sidebar-spacer, .sidebar-note, .sidebar-footer { display: none; }
+      .nav-list { display: flex; gap: 5px; overflow-x: auto; padding-bottom: 1px; }
+      .nav-link { min-height: 36px; flex: 0 0 auto; padding: 0 10px; font-size: 10px; }
+      .nav-link svg { width: 15px; height: 15px; }
+      .main-shell { padding: 20px 18px; }
+      .hero-visual { min-width: 180px; }
+      .stats-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .analysis-grid { grid-template-columns: minmax(0, 1fr) minmax(190px, .8fr); }
+      .ai-card { grid-column: 1 / -1; }
+    }
+    @media (max-width: 600px) {
+      .main-shell { padding: 16px 13px; }
+      .topbar { align-items: flex-start; }
+      .topbar-right { gap: 5px; }
+      .tech-pill, .assignment-pill { min-height: 28px; padding: 0 8px; font-size: 8px; }
+      .hero-banner { min-height: 160px; padding: 24px 22px; }
+      .hero-visual { display: none; }
+      h1 { font-size: 32px; }
+      .section-head { margin-top: 25px; }
+      h2 { font-size: 20px; }
+      .input-layout { grid-template-columns: 1fr; }
+      .guide-panel { padding: 17px 19px; }
+      .guide-list { grid-template-columns: 1fr 1fr; }
+      .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+      .analysis-grid { grid-template-columns: 1fr; }
+      .ai-card { grid-column: auto; }
+      .values-stack { grid-template-rows: auto auto; }
+      .values-card { min-height: 130px; }
+      .summary-strip { align-items: flex-start; }
+      .footer { flex-wrap: wrap; justify-content: center; text-align: center; }
+      .footer p { order: 3; width: 100%; }
+    }
+    @media print {
+      body { background: white; }
+      .sidebar, .topbar, .hero-banner, .input-layout, .section-head .section-step, .footer, .summary-strip .print-button { display: none !important; }
+      .app-shell { display: block; }
+      .main-shell { padding: 0; }
+      .panel, .stat-card, .ai-card { box-shadow: none; break-inside: avoid; }
+      .results-section { display: block; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="#top" aria-label="Mini Smart Data Analyzer dashboard home">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V10"/><path d="M12 13C6.5 13 4 9.5 4 5c5.5 0 8 3.5 8 8Z"/><path d="M12 16c0-5 2.5-8 8-8 0 5.5-2.5 8-8 8Z"/></svg>
+        </span>
+        <span><span class="brand-name">Mini Smart</span><span class="brand-subtitle">Data Analyzer</span></span>
+      </a>
+      <div class="nav-label">Workspace</div>
+      <nav class="nav-list" aria-label="Main navigation">
+        <a class="nav-link active" href="#top"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="5" rx="1.5"/><rect x="13" y="10" width="8" height="11" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/></svg>Dashboard</a>
+        <a class="nav-link" href="#analyze"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V9"/><path d="M10 19V5"/><path d="M16 19v-7"/><path d="M22 19V3"/></svg>Analyze data</a>
+        <a class="nav-link" href="#about"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 8h.01"/></svg>About project</a>
+        <a class="nav-link" href="https://github.com/" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-4.3 1.4-4.3-2.5-6-3m12 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 19 4.77 5.07 5.07 0 0 0 18.91 1S17.73.65 15 2.48a13.38 13.38 0 0 0-7 0C5.27.65 4.09 1 4.09 1A5.07 5.07 0 0 0 4 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 8 18.13V22"/></svg>GitHub</a>
+      </nav>
+      <div class="sidebar-spacer"></div>
+      <div class="sidebar-note">
+        <div class="note-kicker">A note to remember</div>
+        <p>Clear numbers.<br>Confident decisions.</p>
+      </div>
+      <div class="sidebar-footer">ASSIGNMENT 03 &nbsp;·&nbsp; PYTHON DATA ANALYSIS<br>NUMPY + GROQ AI / 2026</div>
+    </aside>
+
+    <main class="main-shell" id="top">
+      <header class="topbar">
+        <div class="breadcrumb">Workspace <span> / </span> <strong>Mini Smart Data Analyzer</strong></div>
+        <div class="topbar-right">
+          <span class="tech-pill"><span class="status-dot"></span> NumPy analytics</span>
+          <span class="assignment-pill">GROQ AI INSIGHT</span>
+        </div>
+      </header>
+
+      <section class="hero-banner" aria-labelledby="page-title">
+        <div class="hero-copy">
+          <p class="hero-kicker">MINI SMART DATA ANALYZER / WORKSPACE</p>
+          <h1 id="page-title">Mini Smart Data Analyzer</h1>
+          <p>Turn raw numbers into <strong>clear, meaningful insights.</strong><br>Analyze. Explore. Understand.</p>
+        </div>
+        <div class="hero-visual" aria-hidden="true">
+          <svg class="hero-chart" viewBox="0 0 330 125" role="img">
+            <defs><linearGradient id="heroFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d2d9bd" stop-opacity=".22"/><stop offset="1" stop-color="#d2d9bd" stop-opacity="0"/></linearGradient></defs>
+            <path class="grid-line" d="M5 25H325M5 62H325M5 99H325"/>
+            <path class="area" d="M7 96C36 91 48 53 78 58S119 91 147 69 192 24 216 43 253 87 276 53 302 22 325 16V120H7Z"/>
+            <path class="trend" d="M7 96C36 91 48 53 78 58S119 91 147 69 192 24 216 43 253 87 276 53 302 22 325 16"/>
+            <circle cx="78" cy="58" r="4"/><circle cx="147" cy="69" r="4"/><circle cx="216" cy="43" r="4"/><circle cx="276" cy="53" r="4"/>
+          </svg>
+          <span class="hero-floating">INSIGHT IN EVERY NUMBER</span>
+        </div>
+      </section>
+
+      <section id="analyze" aria-labelledby="input-title">
+        <div class="section-head">
+          <div><p class="section-kicker">01 / INPUT YOUR DATA</p><h2 id="input-title">Start with your numbers.</h2></div>
+          <span class="section-step">INPUT <span>—</span> ANALYZE <span>—</span> INSIGHT</span>
+        </div>
+        <div class="input-layout">
+          <div class="panel input-panel">
+            <div class="panel-title-row">
+              <span class="icon-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v7c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 12v7c0 1.7 3.6 3 8 3s8-1.3 8-3v-7"/></svg></span>
+              <div><h3>Enter your dataset</h3><p class="panel-subtitle">Add numerical values separated by commas, spaces, semicolons, or new lines.</p></div>
+            </div>
+            <form method="POST" action="/#results" autocomplete="off">
+              <label class="field-label" for="numbers">Numerical values <span>10 minimum &nbsp;·&nbsp; 500 maximum</span></label>
+              <textarea id="numbers" name="numbers" rows="3" placeholder="e.g. 12, 25, 7, 18, 30, 5, 22, 19, 11, 27" required>{{ raw_input }}</textarea>
+              {% if error %}<div class="error-message" role="alert"><span class="error-mark">!</span>{{ error }}</div>{% endif %}
+              <div class="form-bottom">
+                <button type="button" class="sample-button" id="loadSample">↳ &nbsp;Load sample dataset</button>
+                <button type="submit" class="analyze-button">Analyze data <span>↗</span></button>
+              </div>
+            </form>
+            <p class="form-footnote"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11Z"/><path d="m9 12 2 2 4-4"/></svg>Your input is analyzed in memory and is not saved to a database.</p>
+          </div>
+          <aside class="panel guide-panel" id="about" aria-label="Analysis overview">
+            <div class="panel-title-row">
+              <span class="icon-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5M4 19h17"/><path d="m7 14 4-4 3 2 6-7"/></svg></span>
+              <div><h3>What you'll discover</h3><p class="panel-subtitle">A quick overview of your data journey.</p></div>
+            </div>
+            <ul class="guide-list">
+              <li><span class="guide-check">✓</span><span>Five key statistics calculated with NumPy.</span></li>
+              <li><span class="guide-check">✓</span><span>Values sorted from lowest to highest.</span></li>
+              <li><span class="guide-check">✓</span><span>Every value greater than the mean.</span></li>
+              <li><span class="guide-check">✓</span><span>A plain-English explanation from Groq AI.</span></li>
+            </ul>
+            <p class="guide-foot">Built with Python, NumPy, Flask and the Groq API.</p>
+          </aside>
+        </div>
+      </section>
+
+      {% if results %}
+      <section class="results-section" id="results" aria-labelledby="results-title">
+        <div class="section-head">
+          <div><p class="section-kicker">02 / YOUR ANALYSIS</p><h2 id="results-title">A clearer view of your data.</h2></div>
+          <span class="complete-pill">{{ results.count }} VALUES ANALYZED</span>
+        </div>
+        <div class="stats-grid">
+          {% for name, value in results.statistics.items() %}
+          <article class="stat-card {% if name == 'Mean' %}featured{% endif %}">
+            <div class="stat-top"><span>{{ name }}</span><span class="stat-icon">{% if name == 'Mean' %}μ{% elif name == 'Median' %}◉{% elif name == 'Maximum' %}↑{% elif name == 'Minimum' %}↓{% else %}Σ{% endif %}</span></div>
+            <div class="stat-value">{{ "{:,.2f}".format(value) }}</div>
+            <div class="stat-caption">{% if name == 'Mean' %}Average value{% elif name == 'Median' %}Middle value{% elif name == 'Maximum' %}Highest value{% elif name == 'Minimum' %}Lowest value{% else %}Total of all values{% endif %}</div>
+          </article>
+          {% endfor %}
+        </div>
+
+        <div class="analysis-grid">
+          <article class="panel chart-card">
+            <div class="card-head">
+              <div class="card-head-left"><span class="card-head-icon">▥</span><h3>Data distribution</h3></div>
+              <span class="tiny-label">RELATIVE SCALE</span>
+            </div>
+            <p class="chart-caption">A visual comparison of the values you entered.</p>
+            <div class="bar-chart" role="img" aria-label="Bar chart showing the relative spread of the first {{ results.chart_values|length }} values">
+              {% for item in results.chart_values %}
+              <div class="bar-column" title="Value {{ item.index }}: {{ item.value }}"><div class="bar" style="height: {{ item.height }}%;"></div><span>{{ item.index }}</span></div>
+              {% endfor %}
+            </div>
+            <div class="chart-legend"><span>VALUE ORDER</span><strong>{% if results.chart_truncated %}Showing first 24 of {{ results.count }} values{% else %}{{ results.count }} values plotted{% endif %}</strong></div>
+          </article>
+
+          <div class="values-stack">
+            <article class="panel values-card">
+              <div class="card-head"><div class="card-head-left"><span class="card-head-icon">↕</span><h3>Sorted data</h3></div><span class="tiny-label">ASCENDING</span></div>
+              <p class="value-summary">Smallest to largest, using NumPy sort.</p>
+              <div class="value-list" aria-label="Sorted values">
+                {% for value in results.sorted_values %}<span class="value-chip">{{ "{:,.2f}".format(value) }}</span>{% endfor %}
+              </div>
+            </article>
+            <article class="panel values-card above-card">
+              <div class="card-head"><div class="card-head-left"><span class="card-head-icon">↑</span><h3>Above the mean</h3></div><span class="tiny-label">FILTERED</span></div>
+              <p class="value-summary">Values greater than {{ "{:,.2f}".format(results.statistics.Mean) }}.</p>
+              {% if results.above_mean %}
+              <div class="value-list" aria-label="Values greater than the mean">
+                {% for value in results.above_mean %}<span class="value-chip">{{ "{:,.2f}".format(value) }}</span>{% endfor %}
+              </div>
+              {% else %}<p class="empty-state">No values are greater than the mean.</p>{% endif %}
+            </article>
+          </div>
+
+          <article class="ai-card">
+            <div class="ai-head">
+              <div class="ai-title"><span class="ai-spark">✦</span><h3>AI insight</h3></div>
+              <span class="ai-provider">GROQ</span>
+            </div>
+            <p class="ai-copy">{{ results.ai_insight }}</p>
+            <div class="ai-footer">
+              {% if results.ai_status == 'success' %}
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4 4L19 6"/></svg> AI EXPLANATION GENERATED
+              {% elif results.ai_status == 'not-configured' %}
+                <span>＋</span> ADD YOUR KEY IN THE LOCAL .ENV FILE
+              {% else %}
+                <span>!</span> AI CONNECTION NEEDS ATTENTION
+              {% endif %}
+            </div>
+          </article>
+        </div>
+
+        <div class="summary-strip">
+          <div class="summary-copy"><span class="summary-icon">✧</span><span><strong>Analysis complete</strong>Your dataset has been processed with NumPy. Review the statistics, sorted values and AI explanation above.</span></div>
+          <button class="print-button" type="button" onclick="window.print()">Print results ↗</button>
+        </div>
+      </section>
+      {% else %}
+      <div class="empty-state-panel">
+        <span class="empty-icon">✦</span>
+        <div><strong>Your analysis will appear here.</strong><p>Enter at least 10 numbers above and select Analyze data to reveal the statistics, array operations and Groq AI insight.</p></div>
+      </div>
+      {% endif %}
+
+      <footer class="footer" id="about-footer">
+        <a class="footer-brand" href="#top">Mini Smart Data Analyzer</a>
+        <p>BUILT WITH <strong>PYTHON · NUMPY · GROQ AI</strong></p>
+        <span>MINI DATA ANALYZER / 2026</span>
+      </footer>
+    </main>
+  </div>
+  <script>
+    const sampleButton = document.getElementById("loadSample");
+    const numbersField = document.getElementById("numbers");
+
+    if (sampleButton && numbersField) {
+      sampleButton.addEventListener("click", () => {
+        numbersField.value = "12, 25, 7, 18, 30, 5, 22, 19, 11, 27, 14, 9";
+        numbersField.focus();
+      });
+    }
+
+    // Bring freshly generated results into view after the form is submitted.
+    if (window.location.hash === "#results") {
+      document.getElementById("results")?.scrollIntoView({ behavior: "smooth" });
+    }
+  </script>
+</body>
+</html>
