@@ -22,13 +22,17 @@ Mini Smart Data Analyzer is a polished, responsive web application for entering 
 
 ```text
 Mini_Smart_Data_Analyzer/
+│
 ├── app.py
 ├── requirements.txt
 ├── .env.example
 ├── .gitignore
 ├── README.md
-└── templates/
-    └── index.html
+├── templates/
+│   └── index.html
+└── screenshots/
+    ├── 01_dashboard.png
+    └── 02_analysis_and_ai_insight.png
 ```
 
 The CSS and small browser-side interaction are included inside `templates/index.html` so the project contains exactly six files. The `.env` file is created locally during setup and must not be uploaded to GitHub.
